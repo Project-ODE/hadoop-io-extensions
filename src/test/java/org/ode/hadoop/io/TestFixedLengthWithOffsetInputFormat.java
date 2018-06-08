@@ -679,5 +679,4 @@ public class TestFixedLengthWithOffsetInputFormat {
         assertTrue("Result size is expected: ", results.size() == 10);
     }
 
-
 }
