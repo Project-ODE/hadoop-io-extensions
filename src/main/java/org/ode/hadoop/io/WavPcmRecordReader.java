@@ -48,7 +48,7 @@ import java.util.List;
  * skip the file header (if needed), and finally reads chunks of wav
  * data and convert them to Array[Array[Double]] (1 array per signal
  * channel).
-
+ *
  * @author Joseph Allemandou
  */
 public class WavPcmRecordReader extends RecordReader<LongWritable, TwoDDoubleArrayWritable> {
