@@ -49,6 +49,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
  *        (fail by default, can be skip of fill. If fill is chosen, then next property needs to be defined)</li>
  *     <li>FixedLengthWithOffsetInputFormat.setPartialLastRecordFillValue(conf, partialLastRecordFillValue);<br>
  *         (The byte value that should be used to fill partial last record if fill as chosen above)</li>
+ *     <li>FixedLengthWithOffsetInputFormat.setRecordKeyStartAtOffset(conf, recordKeyStartAtOffset);<br>
+ *         (true if record keys are to be offset-padded, false for the to start with beginning of file)</li>
  * </ul>
  *
  * @see FixedLengthWithOffsetRecordReader
@@ -72,10 +74,11 @@ public class FixedLengthWithOffsetInputFormat
     public static final String PARTIAL_LAST_RECORD_ACTION_SKIP = "skip";
     public static final String PARTIAL_LAST_RECORD_ACTION_FILL = "fill";
 
-
     public static final String PARTIAL_LAST_RECORD_FILL_VALUE =
             "fixedlengthwithoffsetinputformat.partiallastrecord.fillvalue";
 
+    public static final String RECORD_KEY_START_AT_OFFSET =
+            "fixedlengthwithoffsetinputformat.recordkey.offsetstart";
 
     /**
      * Set the size of the file header to skip
@@ -155,6 +158,27 @@ public class FixedLengthWithOffsetInputFormat
         return (byte)conf.getInt(PARTIAL_LAST_RECORD_FILL_VALUE, 0);
     }
 
+    /**
+     * Set the value to make record-key start at offset or at beginning of file
+     * @param conf configuration
+     * @param recordKeyStartAtOffset The value to fill the partial last record.
+     */
+    public static void setRecordKeyStartAtOffset(
+            Configuration conf, boolean recordKeyStartAtOffset) {
+        conf.setBoolean(RECORD_KEY_START_AT_OFFSET, recordKeyStartAtOffset);
+    }
+
+    /**
+     * Get the value to make record-key start at offset or at beginning of file
+     * @param conf configuration
+     * @return true if record-key starts with 0 at offset, false if it starts at the beginning
+     *         of file and has offset + 1 as first value.
+     *         Default to true if unset.
+     */
+    public static boolean getRecordKeyStartAtOffset(Configuration conf) {
+        return conf.getBoolean(RECORD_KEY_START_AT_OFFSET, true);
+    }
+
 
 
     @Override
@@ -162,10 +186,12 @@ public class FixedLengthWithOffsetInputFormat
     createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
 
-        int recordLength = getRecordLength(context.getConfiguration());
-        long offsetSize = getOffsetSize(context.getConfiguration());
-        String partialLastRecordAction = getPartialLastRecordAction(context.getConfiguration());
-        byte partialLastRecordFillValue = getPartialLastRecordFillValue(context.getConfiguration());
+        Configuration conf = context.getConfiguration();
+        int recordLength = getRecordLength(conf);
+        long offsetSize = getOffsetSize(conf);
+        String partialLastRecordAction = getPartialLastRecordAction(conf);
+        byte partialLastRecordFillValue = getPartialLastRecordFillValue(conf);
+        boolean keyStartAtOffset = getRecordKeyStartAtOffset(conf);
 
         List<String> errors = new ArrayList<>();
 
@@ -197,7 +223,12 @@ public class FixedLengthWithOffsetInputFormat
                         partialLastRecordAction.toUpperCase());
 
         return new FixedLengthWithOffsetRecordReader(
-                offsetSize, recordLength, partialLastRecordActionEnum, partialLastRecordFillValue);
+                offsetSize,
+                recordLength,
+                partialLastRecordActionEnum,
+                partialLastRecordFillValue,
+                keyStartAtOffset
+        );
     }
 
     @Override
