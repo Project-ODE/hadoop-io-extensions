@@ -448,9 +448,9 @@ public class TestFixedLengthWithOffsetInputFormat {
                 totalRecords = 100;
                 recordLength = 1;
             }
-            boolean recordKeyStartAtOffset = true;
+            boolean shiftRecordKeyByOffset = true;
             if (i == 12) {
-                recordKeyStartAtOffset = false;
+                shiftRecordKeyByOffset = false;
             }
             // The total bytes in the test file
             int fileSize = (offsetSize + totalRecords * recordLength);
@@ -469,7 +469,7 @@ public class TestFixedLengthWithOffsetInputFormat {
             //set the fixed length record length and offset size config properties for the job
             FixedLengthWithOffsetInputFormat.setRecordLength(job.getConfiguration(), recordLength);
             FixedLengthWithOffsetInputFormat.setOffsetSize(job.getConfiguration(), offsetSize);
-            FixedLengthWithOffsetInputFormat.setRecordKeyStartAtOffset(job.getConfiguration(), recordKeyStartAtOffset);
+            FixedLengthWithOffsetInputFormat.setShiftRecordKeyByOffset(job.getConfiguration(), shiftRecordKeyByOffset);
 
 
             int numSplits = 1;
@@ -522,7 +522,7 @@ public class TestFixedLengthWithOffsetInputFormat {
                 while (reader.nextKeyValue()) {
                     key = reader.getCurrentKey();
                     value = reader.getCurrentValue();
-                    if (recordKeyStartAtOffset) {
+                    if (shiftRecordKeyByOffset) {
                         assertEquals("Checking key", (long) (recordNumber * recordLength), key.get());
                     } else {
                         assertEquals("Checking key", (long) (offsetSize + recordNumber * recordLength), key.get());
